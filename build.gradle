@@ -1,0 +1,18 @@
+group 'ucl'
+version '1.0'
+
+apply plugin: 'idea'
+apply plugin: 'scala'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.7.2'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.2'
+    compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-scala_2.11', version: '2.7.2'
+    compile group: 'org.scala-lang', name: 'scala-library', version: '2.11.1'
+    compile group: 'log4j', name: 'log4j', version: '1.2.17'
+    compile group: 'org.twitter4j', name: 'twitter4j-core', version: '4.0.4'
+}

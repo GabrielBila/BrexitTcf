@@ -1,0 +1,8 @@
+.gradle
+
+*.json
+
+.idea
+*.iml
+*.iws
+*.ipr
