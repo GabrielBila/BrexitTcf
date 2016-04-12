@@ -6,3 +6,7 @@
 *.iml
 *.iws
 *.ipr
+
+build/
+out/
+projectFilesBackup/

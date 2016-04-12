@@ -4,11 +4,11 @@ import java.io.{File, FileWriter}
 import java.text.SimpleDateFormat
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import java.util.logging.Logger
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import org.apache.log4j.Logger
 import twitter4j.conf.ConfigurationBuilder
 import twitter4j.{Query, Status, TwitterFactory}
 
@@ -18,6 +18,8 @@ import scala.collection.JavaConversions._
   * Created by Gabriel on 3/11/2016.
   */
 object TwitterSearch {
+
+  private val logger = Logger.getLogger(TwitterSearch.getClass)
 
   private val consumerKey = "ELNqONYPSGtT13huripAO31Yg"
   private val consumerSecret = "8Rc1Jq5ygOrUxevVzWCnPmaWW8y8HL6BKfhTrwPifCDNrloaiT"
@@ -59,7 +61,7 @@ object TwitterSearch {
       val currentPageTweets = searchResults.getTweets
       if (searchResults.hasNext) {
         if (searchResults.getRateLimitStatus.getRemaining <= 0) {
-          println(s"Request rate limit exceeded; waiting ${searchResults.getRateLimitStatus.getSecondsUntilReset} seconds")
+          logger.info(s"Request rate limit exceeded; waiting ${searchResults.getRateLimitStatus.getSecondsUntilReset} seconds")
           Thread.sleep(searchResults.getRateLimitStatus.getSecondsUntilReset * 1000 + 5000)
         }
         currentPageTweets.toStream #::: recursiveSearch(searchResults.nextQuery())
@@ -77,6 +79,8 @@ object TwitterSearch {
 import ucl.irdm.brexit.tcf.TwitterSearch._
 
 object Main {
+
+  val logger = Logger.getLogger(Main.getClass)
 
   val dateFileFormat = new SimpleDateFormat("yyyy-MM-dd")
 
@@ -97,7 +101,7 @@ object Main {
 
     dailyTweets foreach (dayTweets => {
       val filename = s"${dateFileFormat.format(dayTweets.head.getCreatedAt)}.json"
-      println(s"Printing tweets for date: $filename")
+      logger.info(s"Printing tweets for date: $filename")
       printTweetsToFile(filename, dayTweets)
     })
   }

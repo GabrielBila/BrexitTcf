@@ -2,7 +2,30 @@ group 'ucl'
 version '1.0'
 
 apply plugin: 'idea'
+apply plugin: 'eclipse'
 apply plugin: 'scala'
+apply plugin: 'application'
+
+mainClassName = 'ucl.irdm.brexit.tcf.Main'
+
+idea {
+    project {
+        //if you want to set specific jdk and language level
+        jdkName = '1.8'
+        languageLevel = '1.8'
+
+        //you can configure the VCS used by the project
+        vcs = 'Git'
+    }
+}
+
+eclipse {
+    jdt {
+        //if you want to alter the java versions (by default they are configured with gradle java plugin settings):
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
+}
 
 repositories {
     mavenCentral()
