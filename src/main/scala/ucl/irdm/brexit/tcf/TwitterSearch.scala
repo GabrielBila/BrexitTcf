@@ -4,6 +4,7 @@ import java.io.{File, FileWriter}
 import java.text.SimpleDateFormat
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Date
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -18,6 +19,8 @@ import scala.collection.JavaConversions._
   * Created by Gabriel on 3/11/2016.
   */
 object TwitterSearch {
+
+  val twitterDateFormat = new SimpleDateFormat("yyyy-MM-dd")
 
   private val logger = Logger.getLogger(TwitterSearch.getClass)
 
@@ -45,6 +48,8 @@ object TwitterSearch {
                        since: String,
                        until: String): Query = {
 
+    logger.info(s"Building query for day $since")
+
     val queryArgument = s"${terms.mkString(" OR ")}"
 
     val query = new Query(queryArgument)
@@ -54,11 +59,14 @@ object TwitterSearch {
     query
   }
 
-  def getTweets(query: Query): Stream[Status] = {
+  def getTweets(query: Query): (Date, Stream[Status]) = {
+
+    val date = twitterDateFormat.parse(query.getSince)
 
     def recursiveSearch(query: Query): Stream[Status] = {
       val searchResults = twitter.search(query)
       val currentPageTweets = searchResults.getTweets
+
       if (searchResults.hasNext) {
         if (searchResults.getRateLimitStatus.getRemaining <= 0) {
           logger.info(s"Request rate limit exceeded; waiting ${searchResults.getRateLimitStatus.getSecondsUntilReset} seconds")
@@ -71,7 +79,7 @@ object TwitterSearch {
       }
     }
 
-    recursiveSearch(query)
+    (date, recursiveSearch(query))
   }
 
 }
@@ -82,16 +90,36 @@ object Main {
 
   val logger = Logger.getLogger(Main.getClass)
 
-  val dateFileFormat = new SimpleDateFormat("yyyy-MM-dd")
-
-  val startTime = OffsetDateTime.parse("2016-03-09T00:00:00+00:00", DateTimeFormatter.ISO_DATE_TIME)
-  val endTime = OffsetDateTime.parse("2016-03-11T00:00:00+00:00", DateTimeFormatter.ISO_DATE_TIME)
+//  val startTime = OffsetDateTime.parse("2016-04-02T00:00:00+00:00", DateTimeFormatter.ISO_DATE_TIME)
+//  val endTime = OffsetDateTime.parse("2016-04-13T00:00:00+00:00", DateTimeFormatter.ISO_DATE_TIME)
 
   val terms = Array("#brexit", "#no2eu", "#notoeu", "#betteroffout", "#voteout", "#britainout",
     "#leaveeu", "#loveeuropeleaveeu", "#voteleave", "#beleave", "#yes2eu", "#yestoeu",
     "#betteroffin", "#votein", "#ukineu", "#bremain", "#strongerin", "#leadnotleave", "#voteremain")
 
+  def processArgs(args: Array[String]): Option[(OffsetDateTime, OffsetDateTime)] = {
+    try {
+      val startTime = OffsetDateTime.parse(s"${args(0)}T00:00:00+00:00", DateTimeFormatter.ISO_DATE_TIME)
+      val endTime = OffsetDateTime.parse(s"${args(1)}T00:00:00+00:00", DateTimeFormatter.ISO_DATE_TIME)
+      Some(startTime, endTime)
+    } catch {
+      case _: Throwable => None
+    }
+  }
+
+  val usage: String = "Usage: BrexitTCF <start_date> <end_date>\n" +
+    "<start_date> the first day for which to get the Brexit tweets.\n" +
+    "<end_date> the exclusive end of the date range. Will only return tweets up to the day before <end_date>.\n" +
+    "<start_date> and <end_date> must follow format: yyyy-MM-dd"
+
   def main(args: Array[String]): Unit = {
+    val argDates = processArgs(args)
+    if (argDates.isEmpty) {
+      println(usage)
+      return
+    }
+    val (startTime, endTime) = argDates.get
+
     val dailyTweets = daysBetween(startTime, endTime) map (day => {
       val start = dateString(day)
       val end = dateString(day plusDays 1)
@@ -99,11 +127,14 @@ object Main {
       getTweets(query)
     })
 
-    dailyTweets foreach (dayTweets => {
-      val filename = s"${dateFileFormat.format(dayTweets.head.getCreatedAt)}.json"
-      logger.info(s"Printing tweets for date: $filename")
-      printTweetsToFile(filename, dayTweets)
-    })
+    dailyTweets foreach {
+      case (d, Stream.Empty) =>
+        logger.info(s"No tweets found")
+      case (d, dayTweets) =>
+        val filename = s"${twitterDateFormat.format(d)}.json"
+        logger.info(s"Printing tweets for date: $filename")
+        printTweetsToFile(filename, dayTweets)
+    }
   }
 
   def daysBetween(start: OffsetDateTime, end: OffsetDateTime): Stream[OffsetDateTime] =

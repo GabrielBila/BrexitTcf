@@ -27,6 +27,25 @@ eclipse {
     }
 }
 
+sourceSets {
+    main {
+        scala {
+            srcDirs = ['src/main/scala']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        scala {
+            srcDirs = ['src/test/scala']
+        }
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
 repositories {
     mavenCentral()
 }
