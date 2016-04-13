@@ -13,9 +13,9 @@ which to download the tweets when launching it.
 
 After copying the Git repository on your local machine, ```cd``` to the project directory.
 
-To deploy the application, run ```gradle installDist```. The generated JAR files and launch scripts will be placed in
-```build/install/BrexitTcf```.
- 
+To deploy the application, run ```gradle installDist```. The generated JAR files and launch scripts will be 
+placed in ```build/install/BrexitTcf```
+
 ## API Reference
 
 To launch the application, ```cd``` to ```build/install/BrexitTcf/bin``` and run
